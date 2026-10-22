@@ -1,0 +1,6 @@
+.cache
+build
+xml_dumps
+.clang-format
+notes
+compile_commands.json

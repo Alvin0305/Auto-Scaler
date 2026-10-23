@@ -106,7 +106,7 @@ std::vector<virDomainMemoryStatStruct> VM::getMemoryStats() const {
 
 std::string VM::waitAndgetIP() const {
     const auto startTime = std::chrono::system_clock::now();
-    const auto timeout = std::chrono::seconds(20);
+    const auto timeout = std::chrono::seconds(30);
 
     while (true) {
         virDomainInterfacePtr *interfaces = nullptr;

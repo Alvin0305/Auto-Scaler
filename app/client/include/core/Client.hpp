@@ -1,8 +1,9 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include "core/LoadBalancer.hpp"
+#include "core/WorkSender.hpp"
 #include "lib/httplib.hpp"
+#include "model/Config.hpp"
 #include "model/LoadState.hpp"
 #include "tools/WorkGenerator.hpp"
 #include <atomic>
@@ -17,12 +18,12 @@ class Client {
     httplib::Server server;
 
     LoadState state{LoadState::LOW};
-    LoadBalancer balancer;
+    Config config;
 
     WorkGenerator workGenerator;
+    WorkSender sender;
 
     std::thread workSenderThread;
-    std::thread messageReceiverThread;
 
     void workSender();
     void messageReceiver();
@@ -33,7 +34,9 @@ class Client {
     void decreaseLoad();
 
   public:
-    Client() : balancer(), workGenerator() {};
+    Client(const Config &config)
+        : workGenerator(config.work, config.workValueRangeInLowLoad, config.workValueRangeInHighLoad),
+          sender(config.loadBalancerIP, config.loadBalancerPort) {};
 
     void start();
 };

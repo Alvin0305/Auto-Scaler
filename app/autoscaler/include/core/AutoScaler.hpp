@@ -34,8 +34,8 @@ class AutoScaler {
 
   public:
     AutoScaler(const Config &config)
-        : config(config), manager(config.qemuURL), cloner(manager.getConnectionPtr()), destroyer(manager.getConnectionPtr()),
-          idGenerator(), sender(config.loadBalancerIP, config.loadBalancerPort) {};
+        : config(config), manager(config.qemuURL), cloner(manager.getConnectionPtr(), config),
+          destroyer(manager.getConnectionPtr()), idGenerator(), sender(config.loadBalancerIP, config.loadBalancerPort) {};
     void start();
 };
 

@@ -1,9 +1,7 @@
 #include "core/Client.hpp"
-#include "Constants.hpp"
 #include "lib/httplib.hpp"
 #include "logger/Logger.hpp"
 #include "model/LoadState.hpp"
-#include "model/Message.hpp"
 #include "model/Work.hpp"
 #include "tools/WorkGenerator.hpp"
 #include <chrono>
@@ -29,50 +27,14 @@ void Client::workSender() {
 
         switch (state) {
             case LoadState::LOW:
-                std::this_thread::sleep_for(std::chrono::milliseconds(ClientConstants::WORK_INTERVAL_IN_LOW_LOAD));
+                std::this_thread::sleep_for(std::chrono::milliseconds(config.workIntervalInLowLoad));
                 break;
             case LoadState::HIGH:
-                std::this_thread::sleep_for(std::chrono::milliseconds(ClientConstants::WORK_INTERVAL_IN_HIGH_LOAD));
+                std::this_thread::sleep_for(std::chrono::milliseconds(config.workIntervalInHighLoad));
                 break;
         }
 
-        balancer.balance(work);
-    }
-}
-
-void Client::messageReceiver() {
-    server.Post("/scale", [&](const httplib::Request &req, httplib::Response &res) {
-        LOG_INFO("Received message : {} from autoscaler", req.body);
-        Message message = Message::fromString(req.body);
-        std::string response = "{ message: did nothing }";
-        LOG_INFO("Parsed message: {}", message);
-
-        switch (message.action) {
-            case Message::Action::VM_ADDED:
-                LOG_INFO("VM {} with IP {} added", message.name, message.ip);
-                balancer.addIP(message.ip);
-                response = "{ message: IP added }";
-                break;
-            case Message::Action::VM_DESTROYED:
-                LOG_INFO("VM {} with IP {} removed", message.name, message.ip);
-                balancer.removeIP(message.ip);
-                response = "{ message: IP removed }";
-                break;
-            case Message::Action::NONE:
-                LOG_WARN("Received None Action");
-                break;
-            default:
-                LOG_ERROR("Unhandled Message Action");
-                break;
-        }
-
-        res.set_content(response, "application/json");
-    });
-
-    LOG_INFO("Server starting on port {}...", ClientConstants::PORT);
-    if (not server.listen("0.0.0.0", ClientConstants::PORT)) {
-        LOG_ERROR("Failed to start server!");
-        return;
+        sender.send(work);
     }
 }
 
@@ -107,10 +69,8 @@ void Client::start() {
     running = true;
 
     workSenderThread = std::thread(&Client::workSender, this);
-    messageReceiverThread = std::thread(&Client::messageReceiver, this);
 
     cli();
 
     workSenderThread.join();
-    messageReceiverThread.join();
 }

@@ -1,17 +1,18 @@
-add_executable(autoscaler-client
+add_executable(client
     src/main.cpp
-    
+
     src/core/Client.cpp
+    src/core/WorkSender.cpp
 
     src/tools/WorkGenerator.cpp
 )
 
-target_include_directories(autoscaler-client
+target_include_directories(client
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(autoscaler-client
+target_link_libraries(client
     PRIVATE
-        autoscaler-common
+        common
 )

@@ -11,11 +11,10 @@ using json = nlohmann::json;
 
 void LoadBalancer::start() {
     connection.Post("/work", [this](const httplib::Request &req, httplib::Response &res) {
-        LOG_INFO("Received work: {}", req.body);
-
         try {
             json body = json::parse(req.body);
             Work work = body.get<Work>();
+            LOG_DEBUG("Received work: {}", work);
 
             auto resultOpt = balance(work);
             if (resultOpt) {
@@ -30,11 +29,11 @@ void LoadBalancer::start() {
     });
 
     connection.Post("/scale", [this](const httplib::Request &req, httplib::Response &res) {
-        LOG_INFO("Received request: {}", req.body);
-
         try {
             json body = json::parse(req.body);
             Message message = body.get<Message>();
+            LOG_INFO("Received message: {}", message);
+
             onMessage(message);
 
             json response = {{"status", "success"}};
@@ -44,8 +43,8 @@ void LoadBalancer::start() {
         }
     });
 
+    LOG_INFO("Load balancer listening on {}:{}", host, port);
     connection.listen(host, port);
-    LOG_INFO("Load balancer running on {}:{}", host, port);
 }
 
 void LoadBalancer::onMessage(const Message &message) {
@@ -86,13 +85,6 @@ void LoadBalancer::removeIP(const std::string &ip) {
     }
 }
 
-void LoadBalancer::showIps() const {
-    LOG_INFO("IPs: ");
-    for (const auto &ip : ips) {
-        LOG_INFO("\t- {}", ip);
-    }
-}
-
 std::optional<httplib::Result> LoadBalancer::balance(const Work &work) {
     if (ips.empty()) {
         LOG_WARN("There is no server to do load balancing");
@@ -100,7 +92,7 @@ std::optional<httplib::Result> LoadBalancer::balance(const Work &work) {
     }
 
     lastWorkedIndex = (lastWorkedIndex + 1) % ips.size();
-    LOG_INFO("Sending work {} to {}th Server: {}", work, lastWorkedIndex, ips[lastWorkedIndex]);
+    LOG_INFO("Sending work {} to {}/{} Server: {}", work, lastWorkedIndex + 1, ips.size(), ips[lastWorkedIndex]);
 
     json workJson = work;
 
@@ -113,6 +105,6 @@ std::optional<httplib::Result> LoadBalancer::balance(const Work &work) {
         return std::nullopt;
     }
 
-    LOG_INFO("Response body: {}", response->body);
+    LOG_DEBUG("Response body: {}", response->body);
     return response;
 }

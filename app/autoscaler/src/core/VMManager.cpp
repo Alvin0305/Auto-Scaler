@@ -75,15 +75,13 @@ std::optional<VM> VMManager::getVMByName(const std::string &name) const {
 }
 
 void VMManager::startVM(const std::string &name) const {
-    LOG_INFO("Starting {}", name);
+    LOG_INFO("Starting {}...", name);
     auto vmOpt = getVMByName(name);
     if (not vmOpt) {
         throw VMNotFoundException(name);
     }
 
     vmOpt->start();
-    LOG_INFO("Waiting for Cloned VM to cool down");
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
 void VMManager::shutdownVM(const std::string &name) const {

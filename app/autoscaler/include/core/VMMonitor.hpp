@@ -27,14 +27,16 @@ class VMMonitor {
   private:
     const std::vector<VM> &vms;
     unsigned int interval;
+    unsigned int peakCountForTrigger;
 
     unsigned int calculateCPUUsage(unsigned long long cpuTime1, unsigned long long cpuTime2, unsigned int numCPUs,
                                    double elapsedTime) const;
 
   public:
-    explicit VMMonitor(const std::vector<VM> &vms, unsigned int interval) : vms(vms), interval(interval) {};
+    explicit VMMonitor(const std::vector<VM> &vms, unsigned int interval, unsigned int peakCountForTrigger)
+        : vms(vms), interval(interval), peakCountForTrigger(peakCountForTrigger) {};
 
-    MonitorResult monitorUntilMaxOrMin(unsigned int maxThreshold, unsigned int minThreshold);
+    MonitorResult monitorUntilEvent(unsigned int maxThreshold, unsigned int minThreshold);
 };
 
 #endif

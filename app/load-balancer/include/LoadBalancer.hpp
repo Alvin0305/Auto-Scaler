@@ -26,7 +26,6 @@ class LoadBalancer {
     void addIP(const std::string &ip);
     void removeIP(const std::string &ip);
 
-    void showIps() const;
     void onMessage(const Message &message);
 
   public:

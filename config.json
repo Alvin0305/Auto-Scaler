@@ -1,7 +1,7 @@
 {
   "qemuURL": "qemu:///system",
   "defaultStoragePoolName": "default",
-  "defaultPoolPath": "/var/lib/libvirt/images/",
+  "defaultStoragePoolPath": "/var/lib/libvirt/images/",
   "diskImageFileExtension": ".qcow2",
   "loadBalancer": {
     "ip": "127.0.0.1",
@@ -9,21 +9,25 @@
   },
   "client": {
     "ip": "127.0.0.1",
-    "port": 8080
-  },
-  "base": {
-    "name": "autoscaler-base"
-  },
-  "server1": {
-    "name": "autoscaler-server1",
-    "ip": "192.168.122.10",
     "port": 9000
   },
-  "server2": {
-    "name": "autoscaler-server2",
-    "port": 9000
+  "VMs": {
+    "baseVMName": "autoscaler-base",
+    "server1VMName": "autoscaler-server1",
+    "server2VMName": "autoscaler-server2"
   },
+  "workerPort": 8080,
   "monitoringInterval": 5,
   "minCPUUsageThreshold": 40,
-  "maxCPUUsageThreshold": 70
+  "maxCPUUsageThreshold": 70,
+  "work": {
+    "work": "fibonacci",
+    "intervalInLowLoad": 1000,
+    "intervalInHighLoad": 100,
+    "valueStartInLowLoad": 10,
+    "valueStartInHighLoad": 20,
+    "valueEndInLowLoad": 15,
+    "valueEndInHighLoad": 30
+  },
+  "peakCountForTrigger": 3
 }

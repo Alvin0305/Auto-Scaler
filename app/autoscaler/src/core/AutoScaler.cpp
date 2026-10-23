@@ -11,6 +11,7 @@
 #include <libvirt/libvirt.h>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 void AutoScaler::listAllVMs() const {
     const auto vmNames = manager.getAllVMNames();
@@ -43,16 +44,17 @@ void AutoScaler::populateVMs() {
 }
 
 void AutoScaler::scaleDown(const VM &vm) {
-    LOG_INFO("VM {} Reached MIN Threshold...", vm.getName());
-
     if (vms.size() == 1) {
-        LOG_INFO("There is only one VM. Scale down NOT initiated");
+        LOG_DEBUG("Min Theshold reached but there is only one VM. Scale down NOT initiated");
         return;
     }
 
-    LOG_INFO("There are {} VMs. Scale down initiated...", vms.size());
+    LOG_INFO("Min Threshold reached and there are {} VMs. Scale down initiated...", vms.size());
     std::string destroyedVMIP = vm.waitAndgetIP();
     const std::string destroyedVMName = vm.getName();
+
+    Message message = Message::destroy(destroyedVMName, destroyedVMIP);
+    sender.send(message);
 
     destroyer.destroy(vm);
     auto it = std::find(vms.begin(), vms.end(), vm);
@@ -61,24 +63,24 @@ void AutoScaler::scaleDown(const VM &vm) {
     }
 
     LOG_INFO("VM destroyed");
-
-    Message message = Message::destroy(destroyedVMName, destroyedVMIP);
-    sender.send(message);
 }
 
 void AutoScaler::scaleUp() {
     LOG_INFO("Reached MAX Threshold. Scale up initiated...");
 
     std::string cloneVMName = idGenerator.generateVMName();
-    vms.push_back(cloner.clone(config.baseVMName, cloneVMName));
+    VM clonedVM = cloner.clone(config.baseVMName, cloneVMName);
+    vms.push_back(std::move(clonedVM));
     manager.startVM(cloneVMName);
 
     LOG_INFO("VM {} Cloned to {} and started.", config.baseVMName, cloneVMName);
     LOG_INFO("State of {} is: {}", cloneVMName, VMStateToString(manager.getStateOfVM(cloneVMName)));
 
-    const VM &clonedVM = vms[vms.size() - 1];
-    std::string ip = clonedVM.waitAndgetIP();
+    const VM &newVM = vms.back();
+    std::string ip = newVM.waitAndgetIP();
     if (ip.empty()) {
+        LOG_ERROR("Failed to get IP in time for VM {}. Destroying it...", newVM.getName());
+        destroyer.destroy(newVM);
         vms.pop_back();
         return;
     }
@@ -89,8 +91,8 @@ void AutoScaler::scaleUp() {
 
 void AutoScaler::monitorAndScale() {
     while (true) {
-        VMMonitor monitor(vms, config.monitoringInterval);
-        MonitorResult result = monitor.monitorUntilMaxOrMin(config.maxCPUUsageThreshold, config.minCPUUsageThreshold);
+        VMMonitor monitor(vms, config.monitoringInterval, config.peakCountForTrigger);
+        MonitorResult result = monitor.monitorUntilEvent(config.maxCPUUsageThreshold, config.minCPUUsageThreshold);
 
         switch (result.action) {
             case MonitorResult::SCALE_UP:
@@ -110,16 +112,17 @@ void AutoScaler::startVMs() {
     for (const auto &vm : vms) {
         if (manager.getStateOfVM(vm.getName()) == VIR_DOMAIN_RUNNING) continue;
 
-        LOG_INFO("\tStarting {}...", vm.getName());
         manager.startVM(vm.getName());
     }
 }
 
 void AutoScaler::start() {
+    LOG_INFO("Starting AutoScaler...");
+
     listAllVMs();
     populateVMs();
-    printInfo();
     startVMs();
+    printInfo();
 
     LOG_INFO("Watching {} VMs", vms.size());
     for (const auto &vm : vms) {
@@ -127,8 +130,18 @@ void AutoScaler::start() {
     }
 
     for (const auto &vm : vms) {
-        auto message = Message::add(vm.getName(), vm.waitAndgetIP());
-        LOG_INFO("Sending message {}", message);
+        const std::string ip = vm.waitAndgetIP();
+        std::string vmName = vm.getName();
+
+        if (ip.empty()) {
+            LOG_ERROR("Failed to get IP for VM {} within time.", vmName);
+            std::erase_if(vms, [vmName](const VM &vm) { return vm.getName() == vmName; });
+            destroyer.destroy(vm);
+            continue;
+        }
+
+        auto message = Message::add(vmName, ip);
+        LOG_INFO("Sending message to LoadBalancer {}", message);
         sender.send(message);
     }
 

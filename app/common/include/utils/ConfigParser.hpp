@@ -5,13 +5,10 @@
 #include <string>
 
 class ConfigParser {
-  private:
-    const std::string configPath;
-
   public:
-    ConfigParser(const std::string &configPath) : configPath(configPath) {};
+    ConfigParser() = default;
 
-    Config parse() const;
+    Config parse(const std::string &configFilePath) const;
 };
 
 #endif

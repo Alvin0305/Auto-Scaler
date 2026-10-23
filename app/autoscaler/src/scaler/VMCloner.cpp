@@ -43,7 +43,7 @@ void VMCloner::cloneDisk(const std::string &sourceVMDiskImageFilePath, const std
         throw std::runtime_error("Failed to get Source Volume");
     }
 
-    virStoragePoolPtr sourcePool = virStoragePoolLookupByName(connection, ServerConstants::DEFAULT_STORAGE_POOL_NAME);
+    virStoragePoolPtr sourcePool = virStoragePoolLookupByName(connection, config.defaultStoragePoolName.c_str());
     if (not sourcePool) {
         throw std::runtime_error("Failed to get Default Source Pool");
     }
@@ -85,7 +85,7 @@ VM VMCloner::clone(const std::string &sourceVMName, const std::string &cloneVMNa
     parser.setMAC(idGenerator.generateMAC());
     parser.setDiskPath(newVMDiskPath);
 
-    std::string cloneVMDiskName = cloneVMName + ServerConstants::DISK_IMAGE_FILE_EXTENSION;
+    std::string cloneVMDiskName = cloneVMName + config.diskImageFileExtension;
     cloneDisk(sourceVMDiskPath, cloneVMDiskName);
 
     LOG_DEBUG("\tDefining VM XML Config");

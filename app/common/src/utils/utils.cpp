@@ -6,10 +6,6 @@
 #include <string>
 #include <vector>
 
-void to_json(nlohmann::json &j, const Message &message) {
-    j = nlohmann::json{{"action", messageActionToString(message.action)}, {"name", message.name}, {"ip", message.ip}};
-}
-
 std::string messageActionToString(const Message::Action &action) {
     switch (action) {
         case Message::Action::VM_ADDED:

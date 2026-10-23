@@ -2,6 +2,7 @@
 #define VM_CLONER_HPP
 
 #include "VM.hpp"
+#include "model/Config.hpp"
 #include "utils/IDGenerator.hpp"
 #include <libvirt/libvirt.h>
 #include <string>
@@ -10,6 +11,8 @@ class VMCloner {
   private:
     const virConnectPtr connection;
     const IDGenerator idGenerator;
+
+    const Config &config;
 
     std::string getSourceVMDiskPath() const;
 
@@ -20,7 +23,8 @@ class VMCloner {
     void cloneDisk(const std::string &sourceVMDiskPath, const std::string &cloneVMDiskPath) const;
 
   public:
-    explicit VMCloner(const virConnectPtr connection) : connection(connection), idGenerator() {};
+    explicit VMCloner(const virConnectPtr connection, const Config &config)
+        : connection(connection), idGenerator(), config(config) {};
 
     VM clone(const std::string &sourceVMName, const std::string &newName) const;
 };

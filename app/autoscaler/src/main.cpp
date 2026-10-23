@@ -6,8 +6,8 @@
 
 int main() {
     try {
-        ConfigParser parser("config.json");
-        Config config = parser.parse();
+        ConfigParser parser;
+        Config config = parser.parse("config.json");
 
         AutoScaler autoscaler(config);
         autoscaler.start();

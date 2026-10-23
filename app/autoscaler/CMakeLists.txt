@@ -3,7 +3,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBVIRT REQUIRED IMPORTED_TARGET libvirt)
 pkg_check_modules(LIBXMLXX REQUIRED IMPORTED_TARGET libxml++-2.6)
 
-add_executable(autoscaler-server
+add_executable(autoscaler
     src/main.cpp
 
     src/core/AutoScaler.cpp
@@ -21,14 +21,14 @@ add_executable(autoscaler-server
     src/tools/XMLParser.cpp
 )
 
-target_include_directories(autoscaler-server
+target_include_directories(autoscaler
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(autoscaler-server
+target_link_libraries(autoscaler
     PRIVATE
-        autoscaler-common
+        common
         PkgConfig::LIBVIRT
         PkgConfig::LIBXMLXX
 )

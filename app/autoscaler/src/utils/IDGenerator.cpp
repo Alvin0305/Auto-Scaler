@@ -37,8 +37,3 @@ std::string IDGenerator::generateUUID() const {
 
     return ss.str();
 }
-
-std::string IDGenerator::generateVMName() const {
-    static int count = 1;
-    return "autoscaler-server" + std::to_string(++count);
-}

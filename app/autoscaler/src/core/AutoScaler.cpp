@@ -5,7 +5,6 @@
 #include "core/VMMonitor.hpp"
 #include "logger/Logger.hpp"
 #include "model/Message.hpp"
-#include "utils/IDGenerator.hpp"
 #include "utils/utils.hpp"
 #include <algorithm>
 #include <libvirt/libvirt.h>
@@ -68,7 +67,7 @@ void AutoScaler::scaleDown(const VM &vm) {
 void AutoScaler::scaleUp() {
     LOG_INFO("Reached MAX Threshold. Scale up initiated...");
 
-    std::string cloneVMName = idGenerator.generateVMName();
+    std::string cloneVMName = config.server2VMName;
     VM clonedVM = cloner.clone(config.baseVMName, cloneVMName);
     vms.push_back(std::move(clonedVM));
     manager.startVM(cloneVMName);

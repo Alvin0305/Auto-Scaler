@@ -3,7 +3,6 @@
 #include "tools/XMLParser.hpp"
 #include <chrono>
 #include <libvirt/libvirt.h>
-#include <string>
 #include <thread>
 
 void VMDestroyer::turnOffVM(const VM &vm) const {
@@ -19,7 +18,7 @@ void VMDestroyer::turnOffVM(const VM &vm) const {
 
 void VMDestroyer::destroyStorage(const VM &vm) const {
     LOG_DEBUG("Destroying Storage");
-    char *xml = virDomainGetXMLDesc(vm.domainPtr, 0);
+    char *xml = virDomainGetXMLDesc(vm.domainPtr.get(), 0);
     XMLParser parser(xml);
 
     const auto storageVolPaths = parser.getAllVolumePaths();
@@ -36,7 +35,7 @@ void VMDestroyer::destroy(const VM &vm) const {
     destroyStorage(vm);
 
     LOG_DEBUG("Destroying VM");
-    if (virDomainUndefine(vm.domainPtr) != 0) {
+    if (virDomainUndefine(vm.domainPtr.get()) != 0) {
         LOG_ERROR("Failed to Undefine VM");
         return;
     }

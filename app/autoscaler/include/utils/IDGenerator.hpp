@@ -14,7 +14,6 @@ class IDGenerator {
 
     std::string generateMAC() const;
     std::string generateUUID() const;
-    std::string generateVMName() const;
 };
 
 #endif

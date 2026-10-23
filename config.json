@@ -7,10 +7,6 @@
     "ip": "127.0.0.1",
     "port": 8000
   },
-  "client": {
-    "ip": "127.0.0.1",
-    "port": 9000
-  },
   "VMs": {
     "baseVMName": "autoscaler-base",
     "server1VMName": "autoscaler-server1",
@@ -20,6 +16,7 @@
   "monitoringInterval": 5,
   "minCPUUsageThreshold": 40,
   "maxCPUUsageThreshold": 70,
+  "peakCountForTrigger": 3,
   "work": {
     "work": "fibonacci",
     "intervalInLowLoad": 1000,
@@ -28,6 +25,5 @@
     "valueStartInHighLoad": 20,
     "valueEndInLowLoad": 15,
     "valueEndInHighLoad": 30
-  },
-  "peakCountForTrigger": 3
+  }
 }

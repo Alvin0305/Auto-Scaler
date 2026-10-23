@@ -25,10 +25,6 @@ Config ConfigParser::parse(const std::string &configFilePath) const {
     config.loadBalancerIP = loadBalancerJSON.at("ip").get<std::string>();
     config.loadBalancerPort = loadBalancerJSON.at("port").get<unsigned int>();
 
-    json clientJSON = j.at("client");
-    config.clientIP = clientJSON.at("ip").get<std::string>();
-    config.clientPort = clientJSON.at("port").get<unsigned int>();
-
     json VMsJSON = j.at("VMs");
     config.baseVMName = VMsJSON.at("baseVMName").get<std::string>();
     config.server1VMName = VMsJSON.at("server1VMName").get<std::string>();

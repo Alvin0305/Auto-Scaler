@@ -1,5 +1,4 @@
 #include "core/AutoScaler.hpp"
-#include "Constants.hpp"
 #include "VM.hpp"
 #include "core/VMManager.hpp"
 #include "core/VMMonitor.hpp"

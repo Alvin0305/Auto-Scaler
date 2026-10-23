@@ -13,9 +13,6 @@ struct Config {
     std::string defaultStoragePoolName;
     std::string defaultStoragePoolPath;
 
-    std::string clientIP;
-    unsigned int clientPort;
-
     std::string loadBalancerIP;
     unsigned int loadBalancerPort;
 
@@ -44,8 +41,6 @@ struct Config {
         out << "\tDefault Storage Pool Path=" << config.defaultStoragePoolPath << std::endl;
         out << "\tDefault Storage Pool Name=" << config.defaultStoragePoolName << std::endl;
 
-        out << "\tClient IP=" << config.clientIP << std::endl;
-        out << "\tClient Port=" << config.clientPort << std::endl;
         out << "\tLoad Balancer IP=" << config.loadBalancerIP << std::endl;
         out << "\tLoad Balancer Port=" << config.loadBalancerPort << std::endl;
         out << "\tWorked Port=" << config.workerPort << std::endl;

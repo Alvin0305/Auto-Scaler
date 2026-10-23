@@ -1,5 +1,6 @@
 #include "core/VMMonitor.hpp"
 #include "logger/Logger.hpp"
+#include "model/LoadState.hpp"
 #include <chrono>
 #include <libvirt/libvirt.h>
 #include <thread>
@@ -22,16 +23,18 @@ unsigned int VMMonitor::calculateCPUUsage(unsigned long long cpuTime1, unsigned 
 }
 
 MonitorResult VMMonitor::monitorUntilEvent(unsigned int maxThreshold, unsigned int minThreshold) {
-    LOG_INFO("Monitoring {} VMs", vms.size());
+    int vmCount = vms.size();
 
-    std::vector<unsigned long long> lastCpuTime;
-    std::vector<std::chrono::steady_clock::time_point> lastCalculatedAt;
-    std::vector<int> highLoadFor(vms.size());
-    std::vector<int> lowLoadFor(vms.size());
-    for (const auto &vm : vms) {
-        auto info = vm.getInfo();
-        lastCpuTime.push_back(info.cpuTime);
-        lastCalculatedAt.push_back(std::chrono::steady_clock::now());
+    LOG_INFO("Monitoring {} VMs", vmCount);
+
+    std::vector<unsigned long long> lastCpuTime(vmCount);
+    std::vector<std::chrono::steady_clock::time_point> lastCalculatedAt(vmCount);
+    std::vector<LoadState> previousState(vmCount, LoadState::NORMAL);
+    std::vector<unsigned> loadCount(vmCount, 0);
+
+    for (size_t i = 0; i < vmCount; i++) {
+        lastCpuTime[i] = vms[i].getInfo().cpuTime;
+        lastCalculatedAt[i] = std::chrono::steady_clock::now();
     }
 
     while (true) {
@@ -44,28 +47,36 @@ MonitorResult VMMonitor::monitorUntilEvent(unsigned int maxThreshold, unsigned i
 
             auto newCpuInfo = vm.getInfo();
             unsigned int cpuUsage = calculateCPUUsage(lastCpuTime[i], newCpuInfo.cpuTime, newCpuInfo.nrVirtCpu, elapsedSeconds);
-            LOG_INFO("{}: {}%", vm.getName(), cpuUsage);
 
-            if (cpuUsage < minThreshold && vms.size() > 1) {
-                LOG_DEBUG("VM {} continued in low load state for {} iterations.", vm.getName(), lowLoadFor[i]);
-                if (lowLoadFor[i] == peakCountForTrigger) {
-                    return MonitorResult::scaledown(vm);
-                } else {
-                    lowLoadFor[i]++;
-                }
-            } else {
-                lowLoadFor[i] = 0;
+            LoadState currentState = LoadState::NORMAL;
+            if (cpuUsage < minThreshold) {
+                currentState = LoadState::LOW;
+            } else if (cpuUsage > maxThreshold) {
+                currentState = LoadState::HIGH;
             }
 
-            if (cpuUsage > maxThreshold) {
-                LOG_DEBUG("VM {} continued in high load state for {} iterations.", vm.getName(), highLoadFor[i]);
-                if (highLoadFor[i] == peakCountForTrigger) {
-                    return MonitorResult::scaleup(vm);
-                } else {
-                    highLoadFor[i]++;
-                }
+            if (currentState != previousState[i]) {
+                loadCount[i] = 0;
+                previousState[i] = currentState;
+            }
+
+            if (currentState == LoadState::NORMAL) {
+                loadCount[i] = 0;
             } else {
-                highLoadFor[i] = 0;
+                loadCount[i]++;
+            }
+
+            LOG_INFO("{}: {{ CPU Usage={}%, State={}, Peak Count={}/{} }}", vm.getName(), cpuUsage, currentState, loadCount[i],
+                     peakCountForTrigger);
+
+            if (loadCount[i] >= peakCountForTrigger) {
+                if (currentState == LoadState::LOW && vmCount > 1) {
+                    return MonitorResult::scaledown(vm);
+                }
+
+                if (currentState == LoadState::HIGH && vmCount < 2) {
+                    return MonitorResult::scaleup(vm);
+                }
             }
 
             lastCpuTime[i] = newCpuInfo.cpuTime;

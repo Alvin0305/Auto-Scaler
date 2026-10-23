@@ -6,7 +6,6 @@
 #include <libvirt/libvirt.h>
 #include <stdexcept>
 #include <string>
-#include <thread>
 #include <vector>
 
 VMManager::VMManager(const std::string &qemuURL) {

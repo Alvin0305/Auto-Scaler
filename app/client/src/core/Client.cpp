@@ -32,6 +32,9 @@ void Client::workSender() {
             case LoadState::HIGH:
                 std::this_thread::sleep_for(std::chrono::milliseconds(config.workIntervalInHighLoad));
                 break;
+            default:
+                LOG_WARN("Unhandled Load State");
+                break;
         }
 
         sender.send(work);

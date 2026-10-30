@@ -8,9 +8,9 @@
     "port": 8000
   },
   "VMs": {
-    "baseVMName": "autoscaler-base",
-    "server1VMName": "autoscaler-server1",
-    "server2VMName": "autoscaler-server2"
+    "baseVMName": "ubuntu-base",
+    "server1VMName": "server1",
+    "server2VMName": "server2"
   },
   "workerPort": 8080,
   "monitoringInterval": 5,

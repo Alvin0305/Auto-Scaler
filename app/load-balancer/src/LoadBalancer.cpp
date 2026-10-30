@@ -13,6 +13,7 @@ void LoadBalancer::start() {
     connection.Post("/work", [this](const httplib::Request &req, httplib::Response &res) {
         try {
             json body = json::parse(req.body);
+            LOG_INFO("Received body: {}", req.body);
             Work work = body.get<Work>();
             LOG_DEBUG("Received work: {}", work);
 

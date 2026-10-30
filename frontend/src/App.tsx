@@ -22,9 +22,9 @@ const CONFIG = {
     valueEnd: 20,
   },
   HIGH: {
-    interval: 100,
-    valueStart: 40,
-    valueEnd: 42,
+    interval: 50,
+    valueStart: 30,
+    valueEnd: 40,
   },
 };
 
@@ -49,7 +49,7 @@ function App() {
       const value =
         Math.floor(
           Math.random() *
-            (config.valueEnd - config.valueStart + 1)
+          (config.valueEnd - config.valueStart + 1)
         ) + config.valueStart;
 
       // POST request to /work with JSON body
@@ -101,17 +101,32 @@ function App() {
     setMessage("Workload changed to LOW.");
   };
 
-  // Automatically generate workload
+  // Automatically generate workload continuously
   useEffect(() => {
-    sendWorkload();
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let cancelled = false;
 
-    const interval = setInterval(() => {
-      sendWorkload();
-    }, CONFIG[load].interval);
+    const generateWorkload = async () => {
+      if (cancelled) return;
 
-    return () => clearInterval(interval);
+      await sendWorkload();
+
+      if (!cancelled) {
+        timeoutId = setTimeout(
+          generateWorkload,
+          CONFIG[load].interval
+        );
+      }
+    };
+
+    generateWorkload();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [load]);
-
+  
   return (
     <div className="app-container">
 
@@ -137,9 +152,8 @@ function App() {
         <div className="sidebar-bottom">
           <div className="connection-indicator">
             <span
-              className={`status-dot ${
-                connected ? "online" : "offline"
-              }`}
+              className={`status-dot ${connected ? "online" : "offline"
+                }`}
             />
 
             <span>

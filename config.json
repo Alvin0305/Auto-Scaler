@@ -8,13 +8,13 @@
     "port": 8000
   },
   "VMs": {
-    "baseVMName": "ubuntu-base",
-    "server1VMName": "server1",
-    "server2VMName": "server2"
+    "baseVMName": "autoscaler-base",
+    "server1VMName": "autoscaler-server2",
+    "server2VMName": "autoscaler-server1"
   },
   "workerPort": 8080,
   "monitoringInterval": 5,
-  "minCPUUsageThreshold": 40,
+  "minCPUUsageThreshold": 30,
   "maxCPUUsageThreshold": 70,
   "peakCountForTrigger": 3,
   "work": {

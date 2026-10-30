@@ -20,10 +20,3 @@ inline std::ostream &operator<<(std::ostream &out, const Work &work) {
 }
 
 #endif
-
-/*
-{
-	"work": "fibonacci",
-	"value": 10
-}
-/*

@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   Activity,
   ArrowDown,
   ArrowUp,
   Server,
   Zap,
-  RefreshCw,
   Cloud,
   Wifi,
   WifiOff,
@@ -14,54 +13,21 @@ import "./App.css";
 
 type LoadState = "LOW" | "HIGH";
 
-// Configuration from config.json
-const CONFIG = {
-  LOW: {
-    interval: 1000,
-    valueStart: 10,
-    valueEnd: 20,
-  },
-  HIGH: {
-    interval: 50,
-    valueStart: 30,
-    valueEnd: 40,
-  },
-};
-
 function App() {
   const [load, setLoad] = useState<LoadState>("LOW");
   const [connected, setConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState("--");
   const [message, setMessage] = useState("");
 
-  const requestInProgress = useRef(false);
 
-  // Send workload to the Load Balancer
-  const sendWorkload = async () => {
-    if (requestInProgress.current) return;
-
-    requestInProgress.current = true;
+  // Increase load
+  const handleIncreaseLoad = async () => {
+    setLoad("HIGH");
+    setMessage("Workload changed to HIGH.");
 
     try {
-      const config = CONFIG[load];
-
-      // Generate random value based on current load
-      const value =
-        Math.floor(
-          Math.random() *
-          (config.valueEnd - config.valueStart + 1)
-        ) + config.valueStart;
-
-      // POST request to /work with JSON body
-      const response = await fetch("/api/work", {
+      const response = await fetch("/api/load/increase", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          work: "fibonacci",
-          value: value
-        }),
       });
 
       if (!response.ok) {
@@ -74,8 +40,7 @@ function App() {
 
       console.log("Request sent:", {
         method: "POST",
-        path: "/work",
-        body: { value },
+        path: "/api/load/increase",
       });
 
     } catch (error) {
@@ -84,49 +49,41 @@ function App() {
       setConnected(false);
       setMessage("Unable to communicate with Load Balancer.");
 
-    } finally {
-      requestInProgress.current = false;
     }
   };
 
-  // Increase load
-  const handleIncreaseLoad = () => {
-    setLoad("HIGH");
-    setMessage("Workload changed to HIGH.");
-  };
-
   // Decrease load
-  const handleDecreaseLoad = () => {
+  const handleDecreaseLoad = async () => {
     setLoad("LOW");
     setMessage("Workload changed to LOW.");
+
+    try {
+      const response = await fetch("/api/load/decrease", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+
+      setConnected(true);
+      setLastUpdated(new Date().toLocaleTimeString());
+      setMessage("");
+
+      console.log("Request sent:", {
+        method: "POST",
+        path: "/api/load/decrease",
+      });
+
+    } catch (error) {
+      console.error("Failed to send workload:", error);
+
+      setConnected(false);
+      setMessage("Unable to communicate with Load Balancer.");
+
+    }
   };
 
-  // Automatically generate workload continuously
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-    let cancelled = false;
-
-    const generateWorkload = async () => {
-      if (cancelled) return;
-
-      await sendWorkload();
-
-      if (!cancelled) {
-        timeoutId = setTimeout(
-          generateWorkload,
-          CONFIG[load].interval
-        );
-      }
-    };
-
-    generateWorkload();
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timeoutId);
-    };
-  }, [load]);
-  
   return (
     <div className="app-container">
 
@@ -187,14 +144,6 @@ function App() {
                 {connected ? "Connected" : "Disconnected"}
               </span>
             </div>
-
-            <button
-              className="refresh-button"
-              onClick={sendWorkload}
-              title="Send test workload"
-            >
-              <RefreshCw size={18} />
-            </button>
           </div>
         </header>
 
@@ -363,18 +312,6 @@ function App() {
             <div className="system-row">
               <span>Current Load State</span>
               <strong>{load}</strong>
-            </div>
-
-            <div className="system-row">
-              <span>Request Interval</span>
-              <strong>{CONFIG[load].interval} ms</strong>
-            </div>
-
-            <div className="system-row">
-              <span>Value Range</span>
-              <strong>
-                {CONFIG[load].valueStart} - {CONFIG[load].valueEnd}
-              </strong>
             </div>
 
             <div className="system-row">

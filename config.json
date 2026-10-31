@@ -9,12 +9,12 @@
   },
   "VMs": {
     "baseVMName": "autoscaler-base",
-    "server1VMName": "autoscaler-server2",
-    "server2VMName": "autoscaler-server1"
+    "server1VMName": "autoscaler-server1",
+    "server2VMName": "autoscaler-server2"
   },
   "workerPort": 8080,
   "monitoringInterval": 5,
-  "minCPUUsageThreshold": 30,
+  "minCPUUsageThreshold": 40,
   "maxCPUUsageThreshold": 70,
   "peakCountForTrigger": 3,
   "work": {

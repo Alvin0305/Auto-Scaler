@@ -6,17 +6,18 @@
 #include "model/Config.hpp"
 #include "model/LoadState.hpp"
 #include "tools/WorkGenerator.hpp"
-
 #include <atomic>
+#include <mutex>
 #include <thread>
 
 class Client {
   private:
     std::atomic<bool> running{false};
-    std::atomic<LoadState> state{LoadState::LOW};
+    std::mutex mtx;
 
     httplib::Server server;
 
+    LoadState state{LoadState::LOW};
     Config config;
 
     WorkGenerator workGenerator;
@@ -25,20 +26,17 @@ class Client {
     std::thread workSenderThread;
 
     void workSender();
+    void messageReceiver();
+
+    void cli();
 
     void increaseLoad();
     void decreaseLoad();
 
-    void startWebServer();
-
   public:
     Client(const Config &config)
-        : config(config),
-          workGenerator(config.work,
-                        config.workValueRangeInLowLoad,
-                        config.workValueRangeInHighLoad),
-          sender(config.loadBalancerIP,
-                 config.loadBalancerPort) {};
+        : workGenerator(config.work, config.workValueRangeInLowLoad, config.workValueRangeInHighLoad),
+          sender(config.loadBalancerIP, config.loadBalancerPort){};
 
     void start();
 };
